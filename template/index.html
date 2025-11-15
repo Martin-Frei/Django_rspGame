@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .choice-group {
+            margin: 20px 0;
+        }
+        .choice-group label {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .choice-group label:hover {
+            background-color: #f0f0f0;
+        }
+        .choice-group input[type="radio"]:checked + span {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .play-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .play-btn:hover {
+            background-color: #0056b3;
+        }
+        .reset-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+        #result {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .score-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Rock Paper Scissors Game!</h1>
+    <p>Choose your move:</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="choice-group">
+            <label>
+                <input type="radio" name="userChoice" value="rock" checked>
+                <span>✊ Rock</span>
+            </label>
+            <label>
+                <input type="radio" name="userChoice" value="paper">
+                <span>✋ Paper</span>
+            </label>
+            <label>
+                <input type="radio" name="userChoice" value="scissors">
+                <span>✌️ Scissors</span>
+            </label>
+        </div>
+        
+        <div class="button-group">
+            <button type="button" class="play-btn" onclick="playGame()">Play</button>
+            <button type="button" class="reset-btn" onclick="resetGame()">Reset Game</button>
+        </div>
+    </form>
+    
+    <div class="score-box">
+        <h2>Result:</h2>
+        <h3 id="result">Make your choice!</h3>
+        <p>Your Score: <span id="user">0</span></p>
+        <p>Computer Score: <span id="computer">0</span></p>
+        <p>Computer chose: <span id="computerChoice">-</span></p>
+    </div>
+    
+
+    <script>
+        const result = document.getElementById('result');
+        const user = document.getElementById('user');
+        const computer = document.getElementById('computer');
+        const computerChoice = document.getElementById('computerChoice');
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(
+                            cookie.substring(name.length + 1)
+                        );
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie("csrftoken");
+
+        function playGame() {
+            const selectedChoice = document.querySelector('input[name="userChoice"]:checked');
+            
+            if (!selectedChoice) {
+                alert("Please select a choice!");
+                return;
+            }
+            
+            fetch("/game/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                },
+                body: JSON.stringify({
+                    userChoice: selectedChoice.value,
+                }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                result.innerText = data.result;
+                user.innerText = data.user;
+                computer.innerText = data.computer;
+                computerChoice.innerText = data.computerChoice;
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+        }
+
+        // NEU: Reset-Funktion
+        function resetGame() {
+            if (confirm("Are you sure you want to reset the game?")) {
+                fetch("/reset/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrftoken,
+                    },
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    result.innerText = "Game reset!";
+                    user.innerText = data.user;
+                    computer.innerText = data.computer;
+                    computerChoice.innerText = "-";
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
