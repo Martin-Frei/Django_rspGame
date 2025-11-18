@@ -11,8 +11,9 @@ def main(request):
     return render(request, 'index.html')
 
 
-@require_http_methods(["POST"])
+# @require_http_methods(["POST"])
 def game(request):
+    
     # Initialisiere Session-Scores beim ersten Aufruf
     if 'user_score' not in request.session:
         request.session['user_score'] = 0
